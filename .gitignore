@@ -1,8 +1,14 @@
+# Project related files
+CARLA/
+/build/
+/install/
+/log/
+/test/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
-CARLA/
 
 # C extensions
 *.so

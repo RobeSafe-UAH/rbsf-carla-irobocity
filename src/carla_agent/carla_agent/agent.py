@@ -39,6 +39,7 @@ SENSORS = [
         "type": "sensor.camera.rgb",
         "x": 2.0, "y": 0.0, "z": 1.4,
         "image_size_x": 640, "image_size_y": 480, "fov": 90,
+        "sensor_tick": 0.1,  # 10 Hz (igual que fixed_delta_seconds para sincronía)
     },
     {
         "id": "lidar",
