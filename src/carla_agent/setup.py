@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'agent = carla_agent.agent:main',
         ],
     },
 )

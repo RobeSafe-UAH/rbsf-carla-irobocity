@@ -53,6 +53,7 @@ export HF_HOME=${WORK_DIR}/weights/hf
 
 
 export PYTHONPATH="${CARLA_ROOT}/PythonAPI:${CARLA_ROOT}/PythonAPI/carla:${SCENARIO_RUNNER_ROOT}:${LEADERBOARD_ROOT}:/workspace/team_code/:${PYTHONPATH:-}"
+export PYTHONPATH=/workspace/.venv/lib/python3.10/site-packages:$PYTHONPATH
 export PATH="${HOME}/.local/bin:${PATH}"
 
 figlet -c "Robocity"
