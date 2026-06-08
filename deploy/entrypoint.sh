@@ -47,10 +47,8 @@ check_cuda() {
 # Environment
 # ========================
 
-export CARLA_ROOT=/workspace/carla
+export CARLA_ROOT=/workspace/CARLA
 export WORK_DIR=/workspace
-export SCENARIO_RUNNER_ROOT=${WORK_DIR}/scenario_runner
-export LEADERBOARD_ROOT=${WORK_DIR}/leaderboard
 export HF_HOME=${WORK_DIR}/weights/hf
 
 
