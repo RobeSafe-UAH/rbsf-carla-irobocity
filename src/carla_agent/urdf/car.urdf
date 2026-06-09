@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<robot name="ego_car">
+
+  <!-- Root: matches the 'ego' TF frame published by the agent -->
+  <link name="ego"/>
+
+  <!-- ── Car body ───────────────────────────────────────────────────────── -->
+  <joint name="body_joint" type="fixed">
+    <parent link="ego"/>
+    <child link="body"/>
+    <origin xyz="0 0 0.55" rpy="0 0 0"/>
+  </joint>
+  <link name="body">
+    <visual>
+      <geometry>
+        <box size="4.5 1.9 1.1"/>
+      </geometry>
+      <material name="car_blue">
+        <color rgba="0.2 0.4 0.8 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- ── Cabin / roof ───────────────────────────────────────────────────── -->
+  <joint name="cabin_joint" type="fixed">
+    <parent link="ego"/>
+    <child link="cabin"/>
+    <origin xyz="0.1 0 1.35" rpy="0 0 0"/>
+  </joint>
+  <link name="cabin">
+    <visual>
+      <geometry>
+        <box size="2.1 1.75 0.65"/>
+      </geometry>
+      <material name="car_blue"/>
+    </visual>
+  </link>
+
+  <!-- ── Wheels (cylinder axis along Y → rpy="1.5708 0 0") ─────────────── -->
+  <joint name="wheel_fl_joint" type="fixed">
+    <parent link="ego"/>
+    <child link="wheel_fl"/>
+    <origin xyz="1.4 0.97 0" rpy="1.5708 0 0"/>
+  </joint>
+  <link name="wheel_fl">
+    <visual>
+      <geometry>
+        <cylinder radius="0.35" length="0.25"/>
+      </geometry>
+      <material name="wheel_dark">
+        <color rgba="0.15 0.15 0.15 1.0"/>
+      </material>
+    </visual>
+  </link>
+
+  <joint name="wheel_fr_joint" type="fixed">
+    <parent link="ego"/>
+    <child link="wheel_fr"/>
+    <origin xyz="1.4 -0.97 0" rpy="1.5708 0 0"/>
+  </joint>
+  <link name="wheel_fr">
+    <visual>
+      <geometry>
+        <cylinder radius="0.35" length="0.25"/>
+      </geometry>
+      <material name="wheel_dark"/>
+    </visual>
+  </link>
+
+  <joint name="wheel_rl_joint" type="fixed">
+    <parent link="ego"/>
+    <child link="wheel_rl"/>
+    <origin xyz="-1.4 0.97 0" rpy="1.5708 0 0"/>
+  </joint>
+  <link name="wheel_rl">
+    <visual>
+      <geometry>
+        <cylinder radius="0.35" length="0.25"/>
+      </geometry>
+      <material name="wheel_dark"/>
+    </visual>
+  </link>
+
+  <joint name="wheel_rr_joint" type="fixed">
+    <parent link="ego"/>
+    <child link="wheel_rr"/>
+    <origin xyz="-1.4 -0.97 0" rpy="1.5708 0 0"/>
+  </joint>
+  <link name="wheel_rr">
+    <visual>
+      <geometry>
+        <cylinder radius="0.35" length="0.25"/>
+      </geometry>
+      <material name="wheel_dark"/>
+    </visual>
+  </link>
+
+</robot>

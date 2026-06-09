@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 250
   - Class: rviz_common/Selection
@@ -76,9 +77,9 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 0.9802166223526001
+      Max Intensity: 0.9801856279373169
       Min Color: 0; 0; 0
-      Min Intensity: 0.8187580108642578
+      Min Intensity: 0.8187689185142517
       Name: PointCloud2
       Position Transformer: XYZ
       Selectable: true
@@ -95,6 +96,118 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        body:
+          Value: true
+        cabin:
+          Value: true
+        cam_front:
+          Value: true
+        ego:
+          Value: true
+        lidar:
+          Value: true
+        map:
+          Value: true
+        wheel_fl:
+          Value: true
+        wheel_fr:
+          Value: true
+        wheel_rl:
+          Value: true
+        wheel_rr:
+          Value: true
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        ego:
+          body:
+            {}
+          cabin:
+            {}
+          cam_front:
+            {}
+          lidar:
+            {}
+          wheel_fl:
+            {}
+          wheel_fr:
+            {}
+          wheel_rl:
+            {}
+          wheel_rr:
+            {}
+        map:
+          {}
+      Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        body:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        cabin:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ego:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        wheel_fl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_fr:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_rl:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel_rr:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -141,7 +254,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 28.651958465576172
+      Distance: 20.33873176574707
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -156,10 +269,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6353979110717773
+      Pitch: 0.8103979229927063
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.9754068851470947
+      Yaw: 2.195401430130005
     Saved: ~
 Window Geometry:
   Displays:
