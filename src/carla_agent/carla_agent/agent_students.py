@@ -21,33 +21,34 @@ import rclpy
 import numpy as np
 
 from rclpy.node import Node
-from sensor_msgs.msg import Image, PointCloud2, PointField, CameraInfo
+from sensor_msgs.msg import Image, PointCloud2, PointField, NavSatFix, CameraInfo
+from std_msgs.msg import Header
 from geometry_msgs.msg import TransformStamped
 from tf2_ros import StaticTransformBroadcaster
 from cv_bridge import CvBridge
+import sensor_msgs_py.point_cloud2 as pc2
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CONFIGURA AQUÍ TUS SENSORES
+# TODO: CODE
 # ──────────────────────────────────────────────────────────────────────────────
 SENSORS = [
     {
-        "id": "cam_front",
+        "id": ...,
         "type": "sensor.camera.rgb",
-        "x": 0.0, "y": 0.0, "z": 2.5,
-        # "x": 2.0, "y": 0.0, "z": 1.4,
-        "roll": -90, "pitch": 0, "yaw": -90,
-        "image_size_x": 640, "image_size_y": 480, "fov": 90,
-        "sensor_tick": 0.1,  # 10 Hz (igual que fixed_delta_seconds para sincronía)
+        "x": ..., "y": ..., "z": ...,
+        "roll": ..., "pitch": ..., "yaw": ...,
+        "image_size_x": ..., "image_size_y": ..., "fov": ...,
+        "sensor_tick": ...,  # 10 Hz (igual que fixed_delta_seconds para sincronía)
     },
     {
-        "id": "lidar",
+        "id": ...,
         "type": "sensor.lidar.ray_cast",
-        "x": 0.0, "y": 0.0, "z": 2.5,
-        "roll": 0, "pitch": 0, "yaw": -90,
-        "range": 50, "channels": 32,
-        "rotation_frequency": 20,    # = 1 / fixed_delta_seconds → vuelta completa por tick
-        "points_per_second": 320000, # channels × points_per_rotation × rotation_frequency
+        "x": ..., "y": ..., "z": ...,
+        "roll": ..., "pitch": ..., "yaw": ...,
+        "range": ..., "channels": ...,
+        "rotation_frequency": ...,    # = 1 / fixed_delta_seconds → vuelta completa por tick
+        "points_per_second": ..., # channels × points_per_rotation × rotation_frequency
                                      # 32 × 500 × 20 = 320000 → 500 pts por canal por vuelta
     }
 ]
@@ -71,14 +72,14 @@ class CarlaAgentNode(Node):
         # Modo síncrono
         settings = self.world.get_settings()
         settings.synchronous_mode = True
-        settings.fixed_delta_seconds = 0.05  # 20 Hz
+        settings.fixed_delta_seconds = ...  # 20 Hz TODO
         self.world.apply_settings(settings)
 
         self.traffic_manager = self.client.get_trafficmanager()
         self.traffic_manager.set_synchronous_mode(True)
 
         # Spawnar vehículo ego
-        vehicle_bp = bp_lib.filter("vehicle.tesla.model3")[0]
+        vehicle_bp = bp_lib.filter(...)[0] # TODO
         spawn_point = self.world.get_map().get_spawn_points()[0]
         self.vehicle = self.world.spawn_actor(vehicle_bp, spawn_point)
         self.vehicle.set_autopilot(True)
@@ -153,12 +154,13 @@ class CarlaAgentNode(Node):
             cx = width  / 2
             cy = height / 2
         """
-        w   = int(spec.get("image_size_x", 640))
-        h   = int(spec.get("image_size_y", 480))
-        fov = float(spec.get("fov", 90.0))
+        # TODO
+        w   = int(spec.get(..., ...))
+        h   = int(spec.get(..., ...))
+        fov = float(spec.get(..., ...))
 
-        f = (w / 2.0) / math.tan(math.radians(fov) / 2.0)
-        cx, cy = w / 2.0, h / 2.0
+        f = ...
+        cx, cy = ..., ...
 
         msg = CameraInfo()
         msg.header.frame_id = spec["id"]
@@ -225,13 +227,13 @@ class CarlaAgentNode(Node):
 
             if "camera" in spec["type"]:
                 transform = carla.Transform(
-                    carla.Location(x=spec.get("x", 0), y=spec.get("y", 0), z=spec.get("z", 0)),
+                    carla.Location(x=..., y=..., z=...)
                 )
                 
             elif "lidar" in spec["type"]:
                 transform = carla.Transform(
-                    carla.Location(x=spec.get("x", 0), y=spec.get("y", 0), z=spec.get("z", 0)),
-                    carla.Rotation(roll=spec.get("roll", 0), pitch=spec.get("pitch", 0), yaw=spec.get("yaw", 0)),
+                    carla.Location(x=..., y=..., z=...),
+                    carla.Rotation(pitch=..., yaw=..., roll=...)
                 )
             actor = self.world.spawn_actor(bp, transform, attach_to=self.vehicle)
 
@@ -239,15 +241,15 @@ class CarlaAgentNode(Node):
             sensor_id   = spec["id"]
 
             if "camera" in sensor_type:
-                pub      = self.create_publisher(Image,      sensor_id,                10)
-                pub_info = self.create_publisher(CameraInfo, f"{sensor_id}/camera_info", 10)
+                pub      = self.create_publisher(..., ..., ...) # TODO
+                pub_info = self.create_publisher(..., f"{sensor_id}/camera_info", ...) # TODO
                 cam_info = self._make_camera_info(spec)
                 actor.listen(lambda data, p=pub, pi=pub_info, ci=cam_info, sid=sensor_id:
                              self._publish_camera(data, p, pi, ci, sid))
                 self.get_logger().info(f"Intrínseca publicada en /{sensor_id}/camera_info")
 
             elif "lidar" in sensor_type:
-                pub = self.create_publisher(PointCloud2, sensor_id, 10)
+                pub = self.create_publisher(..., ..., ...)
                 actor.listen(lambda data, p=pub, sid=sensor_id: self._publish_lidar(data, p, sid))
 
             self.sensors.append(actor)
@@ -286,7 +288,7 @@ class CarlaAgentNode(Node):
 
     def _publish_lidar(self, data, pub, frame_id):
         points = np.frombuffer(data.raw_data, dtype=np.float32).reshape(-1, 4).copy()
-        points[:, 0] = -points[:, 0]  # CARLA left-handed → ROS right-handed
+        points[:, 0] = -points[:, 0]  # CARLA left-handed → Real world right-handed
         msg = PointCloud2()
         msg.header.stamp    = self.get_clock().now().to_msg()
         msg.header.frame_id = frame_id
