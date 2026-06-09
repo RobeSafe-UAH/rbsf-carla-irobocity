@@ -101,5 +101,6 @@ RUN echo "source /workspace/deploy/entrypoint.sh" >> ~/.bashrc
 RUN echo "source install/setup.sh" >> ~/.bashrc
 RUN echo "alias RVIZ='rviz2 -d /workspace/rviz_cfg.rviz'" >> ~/.bashrc
 RUN echo "alias BUILD='cd /workspace && colcon build && source install/setup.sh'" >> ~/.bashrc
+RUN echo "alias RUN='cd /workspace && BUILD && ros2 launch stack_launcher carla.launch.py'" >> ~/.bashrc
 
 CMD ["/bin/bash"]

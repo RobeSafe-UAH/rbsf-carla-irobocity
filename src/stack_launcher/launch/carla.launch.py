@@ -22,4 +22,10 @@ def generate_launch_description():
             executable='perception',
             output='screen',
         ),
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            output='screen',
+            arguments=['-d', '/workspace/rviz_cfg.rviz'],
+        ),
     ])
