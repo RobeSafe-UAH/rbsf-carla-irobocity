@@ -24,7 +24,7 @@ define run_docker
 		-e NVIDIA_VISIBLE_DEVICES=all \
 		-e NVIDIA_DRIVER_CAPABILITIES=all \
 		$(IMAGE_NAME):$(TAG_NAME) \
-		bash ./deploy/entrypoint.sh
+		bash
 endef
 
 build_image:

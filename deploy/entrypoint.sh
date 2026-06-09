@@ -52,7 +52,8 @@ export WORK_DIR=/workspace
 export HF_HOME=${WORK_DIR}/weights/hf
 
 
-export PYTHONPATH="${CARLA_ROOT}/PythonAPI:${CARLA_ROOT}/PythonAPI/carla:${SCENARIO_RUNNER_ROOT}:${LEADERBOARD_ROOT}:/workspace/team_code/:${PYTHONPATH:-}"
+export PYTHONPATH="${CARLA_ROOT}/PythonAPI:${CARLA_ROOT}/PythonAPI/carla:${PYTHONPATH:-}"
+export PYTHONPATH="${WORK_DIR}/.venv/lib/python3.10/site-packages:${PYTHONPATH}"
 export PYTHONPATH=/workspace/.venv/lib/python3.10/site-packages:$PYTHONPATH
 export PATH="${HOME}/.local/bin:${PATH}"
 
@@ -66,5 +67,3 @@ check_cuda
 
 
 echo -e "\n-----------------------------------------------------------------------------------------\n"
-
-/bin/bash
