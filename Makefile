@@ -27,7 +27,7 @@ define run_docker
 		bash ./deploy/entrypoint.sh
 endef
 
-build:
+build_image:
 	docker build deploy/ \
 		-t $(IMAGE_NAME):$(TAG_NAME) \
 		--build-arg USER=$(USER_NAME) \

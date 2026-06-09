@@ -101,6 +101,6 @@ ENV TERM=xterm-256color
 RUN echo "PS1='\[\e[1;34m\]\u\[\e[1;37m\]@\[\e[1;33m\]\h\[\e[1;37m\]:\[\e[0;37m\]\w\[\e[1;37m\] >> \[\e[0m\]'" >> ~/.bashrc
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "alias RVIZ='rviz2 -d /workspace/rviz_cfg.rviz'" >> ~/.bashrc
-RUN echo "alias BUILD='cd /workspace/perception_node && colcon build && source install/setup.sh && cd /workspace'" >> ~/.bashrc
+RUN echo "alias BUILD='cd /workspace && colcon build && source install/setup.sh'" >> ~/.bashrc
 
 CMD ["/bin/bash"]

@@ -11,3 +11,4 @@ cd ..
 ./ImportAssets.sh
 rm CARLA_0.9.15.tar.gz
 cd ..
+touch CARLA/COLCON_IGNORE

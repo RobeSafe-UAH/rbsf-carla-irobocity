@@ -331,8 +331,8 @@ class CarlaAgentNode(Node):
 # ──────────────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="Agente CARLA con ROS 2")
-    parser.add_argument("--traffic", type=int, default=0, metavar="N",
-                        help="Número de vehículos de tráfico a generar (default: 0)")
+    parser.add_argument("--traffic", type=int, default=50, metavar="N",
+                        help="Número de vehículos de tráfico a generar (default: 50)")
     args = parser.parse_args()
 
     rclpy.init()
