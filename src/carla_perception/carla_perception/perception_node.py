@@ -11,7 +11,6 @@ import rclpy.time
 from rclpy.node import Node
 from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
 from sensor_msgs_py.point_cloud2 import read_points_numpy
-from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -22,17 +21,7 @@ CAMERA_FRAME = "cam_front"
 LIDAR_FRAME  = "lidar"
 EGO_FRAME    = "ego"
 
-# Predefined box dimensions per COCO class id (L × W × H in metres)
-BOX_DIMS = {
-    0: (0.6,  0.6,  1.8),   # person
-    1: (1.8,  0.6,  1.2),   # bicycle
-    2: (4.5,  2.0,  1.6),   # car
-    3: (2.2,  0.9,  1.4),   # motorcycle
-    5: (12.0, 2.9,  3.6),   # bus
-    6: (20.0, 3.0,  3.8),   # train
-    7: (8.0,  2.5,  3.2),   # truck
-}
-MIN_INSTANCE_POINTS = 5
+MIN_INSTANCE_POINTS = 10
 SOR_K    = 10
 SOR_NSTD = 2.0
 
@@ -46,6 +35,7 @@ def _sor_filter(pts: np.ndarray, k: int, n_std: float) -> np.ndarray:
     mean_dists = distances[:, 1:].mean(axis=1)  # exclude self (col 0)
     thresh = mean_dists.mean() + n_std * mean_dists.std()
     return pts[mean_dists <= thresh]
+
 
 
 class PerceptionNode(Node):
@@ -272,7 +262,7 @@ class PerceptionNode(Node):
             msg = self._create_painted_cloud_msg(lidar_points, occupied, ros_time)
             self.painted_cloud_publisher.publish(msg)
 
-        # STEP 7: Filter outliers per instance and fit a predefined bounding box
+        # STEP 7: Filter outliers per instance and estimate centroid
         marker_array = MarkerArray()
         for i, instance in enumerate(self.instance_clouds):
             pts = instance['points'][:, :3]
@@ -282,10 +272,9 @@ class PerceptionNode(Node):
             if len(pts) < MIN_INSTANCE_POINTS:
                 continue
             centroid = pts.mean(axis=0)
-            dims = BOX_DIMS.get(instance['class_id'], (2.0, 1.0, 1.5))
             marker_array.markers.append(
-                self._make_box_marker(i, centroid, dims, ros_time,
-                                      self.last_lidar_msg.header.frame_id)
+                self._make_centroid_marker(i, centroid, ros_time,
+                                           self.last_lidar_msg.header.frame_id)
             )
         self.bbox_publisher.publish(marker_array)
 
@@ -294,32 +283,22 @@ class PerceptionNode(Node):
 
     # ── Helper functions ─────────────────────────────────────────────────────────
 
-    def _make_box_marker(self, uid: int, centroid: np.ndarray, dims: tuple,
-                         ros_time, frame_id: str) -> Marker:
+    def _make_centroid_marker(self, uid: int, centroid: np.ndarray,
+                              ros_time, frame_id: str) -> Marker:
         marker = Marker()
         marker.header.stamp    = ros_time
         marker.header.frame_id = frame_id
-        marker.ns      = "bounding_boxes"
+        marker.ns      = "centroids"
         marker.id      = uid
-        marker.type    = Marker.LINE_LIST
+        marker.type    = Marker.SPHERE
         marker.action  = Marker.ADD
-        marker.scale.x = 0.05
-        marker.color   = ColorRGBA(r=1.0, g=1.0, b=0.0, a=1.0)
+        marker.scale.x = marker.scale.y = marker.scale.z = 0.4
+        marker.color   = ColorRGBA(r=0.0, g=1.0, b=0.0, a=0.9)
         marker.lifetime = rclpy.duration.Duration(seconds=0.3).to_msg()
-
-        cx, cy, cz = centroid
-        dx, dy, dz = dims[0] / 2, dims[1] / 2, dims[2] / 2
-        # 8 corners ordered by (sx, sy, sz) in {-1,+1}³
-        corners = [
-            Point(x=cx + sx * dx, y=cy + sy * dy, z=cz + sz * dz)
-            for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)
-        ]
-        # 12 edges: 4 along z, 4 along y, 4 along x
-        edges = [(0,1),(2,3),(4,5),(6,7),
-                 (0,2),(1,3),(4,6),(5,7),
-                 (0,4),(1,5),(2,6),(3,7)]
-        for a, b in edges:
-            marker.points += [corners[a], corners[b]]
+        marker.pose.position.x = float(centroid[0])
+        marker.pose.position.y = float(centroid[1])
+        marker.pose.position.z = float(centroid[2])
+        marker.pose.orientation.w = 1.0
         return marker
 
     def project_lidar_to_image(self, lidar_points: np.ndarray):
