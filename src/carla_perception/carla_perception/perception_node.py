@@ -45,7 +45,6 @@ class PerceptionNode(Node):
 
         # Publishers
         self.segmentation_publisher = self.create_publisher(Image, "segmented_image", 1)
-        self.masks_publisher = self.create_publisher(Image, "masks", 1)
         self.painted_cloud_publisher = self.create_publisher(
             PointCloud2, "painted_cloud", 1
         )
@@ -159,10 +158,9 @@ class PerceptionNode(Node):
           4. Project the LiDAR point cloud onto the image plane.
           5. Paint and publish each LiDAR point with the class label at its projected pixel.
           6. Save the corrsponding pcl for each instance
+          7. Estimate the centroid of each instance's point cloud and publish as a MarkerArray.
         """
         print('Timer callback triggered.')
-        import time
-        t1 = time.time()
         ros_time = self.get_clock().now().to_msg()
         
         if not hasattr(self, 'last_camera_msg') or not hasattr(self, 'last_lidar_msg'):
@@ -205,9 +203,6 @@ class PerceptionNode(Node):
         # STEP 3: Publish the segmented image and the merged class mask
         msg = self._create_rgb_img_msg(results.plot(), ros_time)
         self.segmentation_publisher.publish(msg)
-
-        msg = self._create_masks_msg(merged_mask, ros_time)
-        self.masks_publisher.publish(msg)
         
         # STEP 4: Project LiDAR points onto the image plane
         lidar_points = read_points_numpy(self.last_lidar_msg, field_names=("x", "y", "z", "intensity"))
@@ -277,10 +272,7 @@ class PerceptionNode(Node):
                                            self.last_lidar_msg.header.frame_id)
             )
         self.bbox_publisher.publish(marker_array)
-
-        t2 = time.time()
-        self.get_logger().info(f'Perception processing took {t2 - t1:.2f} seconds.')
-
+    
     # ── Helper functions ─────────────────────────────────────────────────────────
 
     def _make_centroid_marker(self, uid: int, centroid: np.ndarray,
