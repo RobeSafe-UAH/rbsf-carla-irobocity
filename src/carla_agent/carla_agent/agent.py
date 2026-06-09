@@ -38,6 +38,7 @@ SENSORS = [
         "id": "cam_front",
         "type": "sensor.camera.rgb",
         "x": 2.0, "y": 0.0, "z": 1.4,
+        "roll": -90, "pitch": 0, "yaw": -90,
         "image_size_x": 640, "image_size_y": 480, "fov": 90,
         "sensor_tick": 0.1,  # 10 Hz (igual que fixed_delta_seconds para sincronía)
     },
@@ -45,6 +46,7 @@ SENSORS = [
         "id": "lidar",
         "type": "sensor.lidar.ray_cast",
         "x": 0.0, "y": 0.0, "z": 2.5,
+        "roll": 0, "pitch": 0, "yaw": -90,
         "range": 50, "channels": 32,
         "rotation_frequency": 20,    # = 1 / fixed_delta_seconds → vuelta completa por tick
         "points_per_second": 320000, # channels × points_per_rotation × rotation_frequency
@@ -56,7 +58,6 @@ SENSORS = [
         "x": 0.0, "y": 0.0, "z": 0.0,
     },
 ]
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Nodo ROS 2
@@ -120,7 +121,9 @@ class CarlaAgentNode(Node):
             transforms.append(self._make_tf(
                 "ego", spec["id"],
                 spec.get("x", 0), spec.get("y", 0), spec.get("z", 0),
-                spec.get("roll", 0), spec.get("pitch", 0), spec.get("yaw", 0),
+                spec.get("roll",  0),
+                spec.get("pitch", 0),
+                spec.get("yaw",   0),
             ))
 
         broadcaster.sendTransform(transforms)
@@ -225,10 +228,17 @@ class CarlaAgentNode(Node):
                 if k not in RESERVED:
                     bp.set_attribute(str(k), str(v))
 
-            transform = carla.Transform(
-                carla.Location(x=spec.get("x", 0), y=spec.get("y", 0), z=spec.get("z", 0)),
-                carla.Rotation(roll=spec.get("roll", 0), pitch=spec.get("pitch", 0), yaw=spec.get("yaw", 0)),
-            )
+
+            if "camera" in spec["type"]:
+                transform = carla.Transform(
+                    carla.Location(x=spec.get("x", 0), y=spec.get("y", 0), z=spec.get("z", 0)),
+                )
+                
+            elif "lidar" in spec["type"]:
+                transform = carla.Transform(
+                    carla.Location(x=spec.get("x", 0), y=spec.get("y", 0), z=spec.get("z", 0)),
+                    carla.Rotation(roll=spec.get("roll", 0), pitch=spec.get("pitch", 0), yaw=spec.get("yaw", 0)),
+                )
             actor = self.world.spawn_actor(bp, transform, attach_to=self.vehicle)
 
             sensor_type = spec["type"]
@@ -285,7 +295,8 @@ class CarlaAgentNode(Node):
         pub_info.publish(cam_info)
 
     def _publish_lidar(self, data, pub, frame_id):
-        points = np.frombuffer(data.raw_data, dtype=np.float32).reshape(-1, 4)
+        points = np.frombuffer(data.raw_data, dtype=np.float32).reshape(-1, 4).copy()
+        points[:, 0] = -points[:, 0]  # CARLA left-handed → ROS right-handed
         msg = PointCloud2()
         msg.header.stamp    = self.get_clock().now().to_msg()
         msg.header.frame_id = frame_id
