@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'perception = carla_perception.perception_node:main',
         ],
     },
 )

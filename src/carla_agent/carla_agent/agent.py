@@ -37,7 +37,8 @@ SENSORS = [
     {
         "id": "cam_front",
         "type": "sensor.camera.rgb",
-        "x": 2.0, "y": 0.0, "z": 1.4,
+        "x": 0.0, "y": 0.0, "z": 2.5,
+        # "x": 2.0, "y": 0.0, "z": 1.4,
         "roll": -90, "pitch": 0, "yaw": -90,
         "image_size_x": 640, "image_size_y": 480, "fov": 90,
         "sensor_tick": 0.1,  # 10 Hz (igual que fixed_delta_seconds para sincronía)
