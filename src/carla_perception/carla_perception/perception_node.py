@@ -18,11 +18,11 @@ import tf2_ros
 
 
 CAMERA_FRAME = "cam_front"
-LIDAR_FRAME  = "lidar"
-EGO_FRAME    = "ego"
+LIDAR_FRAME = "lidar"
+EGO_FRAME = "ego"
 
 MIN_INSTANCE_POINTS = 10
-SOR_K    = 10
+SOR_K = 10
 SOR_NSTD = 2.0
 
 
@@ -37,9 +37,7 @@ def _sor_filter(pts: np.ndarray, k: int, n_std: float) -> np.ndarray:
     return pts[mean_dists <= thresh]
 
 
-
 class PerceptionNode(Node):
-
     def __init__(self):
         super().__init__("carla_perception")
 
@@ -54,19 +52,19 @@ class PerceptionNode(Node):
         self.bbox_publisher = self.create_publisher(MarkerArray, "bounding_boxes", 1)
 
         # TF2 buffer/listener — filled automatically from /tf_static
-        self._tf_buffer   = tf2_ros.Buffer()
+        self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
 
         # Block until intrinsics and extrinsics are published by the agent
         self.get_logger().info("Waiting for camera_info and TF transforms...")
-        camera_info     = self._wait_for_camera_info()
-        T_ego_cam       = self._wait_for_transform(EGO_FRAME, CAMERA_FRAME)
-        T_ego_lidar     = self._wait_for_transform(EGO_FRAME, LIDAR_FRAME)
+        camera_info = self._wait_for_camera_info()
+        T_ego_cam = self._wait_for_transform(EGO_FRAME, CAMERA_FRAME)
+        T_ego_lidar = self._wait_for_transform(EGO_FRAME, LIDAR_FRAME)
 
         # Calibration
-        self.K         = np.array(camera_info.k).reshape(3, 3)
-        self.img_w     = camera_info.width
-        self.img_h     = camera_info.height
+        self.K = np.array(camera_info.k).reshape(3, 3)
+        self.img_w = camera_info.width
+        self.img_h = camera_info.height
         self.lidar2cam = np.linalg.inv(T_ego_cam) @ T_ego_lidar
 
         self.get_logger().info(
@@ -76,13 +74,13 @@ class PerceptionNode(Node):
         # Detection model
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.segmentation_model = YOLO("yolo26s-seg.pt").to(self.device)
-        self.classes        = [0, 1, 2, 3, 5, 6, 7]
+        self.classes = [0, 1, 2, 3, 5, 6, 7]
         self.conf_threshold = 0.4
 
         # Mask color map
         self.class_colors = {
-            0: (0, 255, 0),                                   # person → green
-            **{i: (0, 255, 255) for i in [1, 2, 3, 5, 6, 7]} # vehicles → cyan
+            0: (0, 255, 0),  # person → green
+            **{i: (0, 255, 255) for i in [1, 2, 3, 5, 6, 7]},  # vehicles → cyan
         }
 
         # Subscribers
@@ -126,14 +124,16 @@ class PerceptionNode(Node):
         t = ts.transform.translation
         q = ts.transform.rotation
         x, y, z, w = q.x, q.y, q.z, q.w
-        R = np.array([
-            [1 - 2*(y*y + z*z),     2*(x*y - z*w),     2*(x*z + y*w)],
-            [    2*(x*y + z*w), 1 - 2*(x*x + z*z),     2*(y*z - x*w)],
-            [    2*(x*z - y*w),     2*(y*z + x*w), 1 - 2*(x*x + y*y)],
-        ])
+        R = np.array(
+            [
+                [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+                [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)],
+            ]
+        )
         T = np.eye(4)
         T[:3, :3] = R
-        T[:3,  3] = [t.x, t.y, t.z]
+        T[:3, 3] = [t.x, t.y, t.z]
         return T
 
     # ── Callbacks ─────────────────────────────────────────────────────────
@@ -141,12 +141,12 @@ class PerceptionNode(Node):
     def camera_callback(self, msg: Image):
         """Save the latest camera image message for processing in the timer callback."""
         self.last_camera_msg = msg
-        self.get_logger().info('Received a new camera image message.')
+        # self.get_logger().info('Received a new camera image message.')
 
     def lidar_callback(self, msg: PointCloud2):
         """Save the latest LiDAR message for processing in the timer callback."""
         self.last_lidar_msg = msg
-        self.get_logger().info('Received a new LiDAR message.')
+        # self.get_logger().info('Received a new LiDAR message.')
 
     def timer_callback(self):
         """Process the sensor data provided by the simulator.
@@ -160,32 +160,32 @@ class PerceptionNode(Node):
           6. Save the corrsponding pcl for each instance
           7. Estimate the centroid of each instance's point cloud and publish as a MarkerArray.
         """
-        print('Timer callback triggered.')
+        print("Timer callback triggered.")
         ros_time = self.get_clock().now().to_msg()
-        
-        if not hasattr(self, 'last_camera_msg') or not hasattr(self, 'last_lidar_msg'):
-            self.get_logger().warning('Waiting for both camera and LiDAR messages...')
+
+        if not hasattr(self, "last_camera_msg") or not hasattr(self, "last_lidar_msg"):
+            self.get_logger().warning("Waiting for both camera and LiDAR messages...")
             return
-        
+
         # Convert ROS Image to numpy array
         img = np.frombuffer(self.last_camera_msg.data, dtype=np.uint8).reshape(
             (self.last_camera_msg.height, self.last_camera_msg.width, -1)
         )
         # bgr to rgb
         img = img[:, :, ::-1]
-        
+
         # Run segmentation model
         results = self.segmentation_model(
             img,
             classes=self.classes,
             conf=self.conf_threshold,
             device=self.device,
-            verbose=False
+            verbose=False,
         )[0]
-        
+
         masks = results.masks.data.cpu().numpy() if results.masks is not None else None
         cls = results.boxes.cls.cpu().numpy() if results.boxes is not None else None
-                
+
         # STEP 2: Merge per-object masks into a single binary mask at the
         # original image resolution. White (255) marks object pixels.
         merged_mask = np.zeros((self.img_h, self.img_w), dtype=np.uint8)
@@ -203,22 +203,30 @@ class PerceptionNode(Node):
         # STEP 3: Publish the segmented image and the merged class mask
         msg = self._create_rgb_img_msg(results.plot(), ros_time)
         self.segmentation_publisher.publish(msg)
-        
+
         # STEP 4: Project LiDAR points onto the image plane
-        lidar_points = read_points_numpy(self.last_lidar_msg, field_names=("x", "y", "z", "intensity"))
+        lidar_points = read_points_numpy(
+            self.last_lidar_msg, field_names=("x", "y", "z", "intensity")
+        )
         pixel_coords, valid_indices = self.project_lidar_to_image(lidar_points)
-        lidar_points = lidar_points[valid_indices]  # keep only points that project into the image
+        lidar_points = lidar_points[
+            valid_indices
+        ]  # keep only points that project into the image
 
         # STEP 4: Draw projected LiDAR points onto the mask with a jet depth colormap
         if pixel_coords.shape[1] > 0:
             u = pixel_coords[0, :]
             v = pixel_coords[1, :]
 
-            dist = np.sqrt(lidar_points[:, 0]**2 + lidar_points[:, 1]**2).astype(np.float32)
+            dist = np.sqrt(lidar_points[:, 0] ** 2 + lidar_points[:, 1] ** 2).astype(
+                np.float32
+            )
             d_min, d_max = dist.min(), dist.max()
             norm = ((dist - d_min) / (d_max - d_min + 1e-6) * 255).astype(np.uint8)
             # cv2.applyColorMap expects (N, 1, 1); returns (N, 1, 3) BGR
-            point_colors = cv2.applyColorMap(norm[:, None, None], cv2.COLORMAP_JET)[:, 0, :]
+            point_colors = cv2.applyColorMap(norm[:, None, None], cv2.COLORMAP_JET)[
+                :, 0, :
+            ]
 
             img_with_lidar = cv2.cvtColor(merged_mask, cv2.COLOR_GRAY2BGR)
             # Paint a cross-shaped 3-pixel neighbourhood (vectorised, no Python loop per point)
@@ -231,7 +239,7 @@ class PerceptionNode(Node):
             img_with_lidar = cv2.cvtColor(img_with_lidar, cv2.COLOR_BGR2RGB)
             msg = self._create_rgb_img_msg(img_with_lidar, ros_time)
             self.projected_lidar_publisher.publish(msg)
-        
+
         # STEP 5: Gather the per-instance filtered point cloud
         self.instance_clouds = []
         if masks is not None and cls is not None and pixel_coords.shape[1] > 0:
@@ -244,10 +252,12 @@ class PerceptionNode(Node):
                     interpolation=cv2.INTER_NEAREST,
                 )
                 in_instance = instance_mask[v_coords, u_coords] > 0
-                self.instance_clouds.append({
-                    'class_id': int(class_id),
-                    'points': lidar_points[in_instance],  # (K, 4) x/y/z/intensity
-                })
+                self.instance_clouds.append(
+                    {
+                        "class_id": int(class_id),
+                        "points": lidar_points[in_instance],  # (K, 4) x/y/z/intensity
+                    }
+                )
 
         # STEP 6: Publish the painted point cloud (1 = inside a detection, 0 = background)
         if pixel_coords.shape[1] > 0:
@@ -260,7 +270,7 @@ class PerceptionNode(Node):
         # STEP 7: Filter outliers per instance and estimate centroid
         marker_array = MarkerArray()
         for i, instance in enumerate(self.instance_clouds):
-            pts = instance['points'][:, :3]
+            pts = instance["points"][:, :3]
             if len(pts) < MIN_INSTANCE_POINTS:
                 continue
             pts = _sor_filter(pts, SOR_K, SOR_NSTD)
@@ -268,24 +278,26 @@ class PerceptionNode(Node):
                 continue
             centroid = pts.mean(axis=0)
             marker_array.markers.append(
-                self._make_centroid_marker(i, centroid, ros_time,
-                                           self.last_lidar_msg.header.frame_id)
+                self._make_centroid_marker(
+                    i, centroid, ros_time, self.last_lidar_msg.header.frame_id
+                )
             )
         self.bbox_publisher.publish(marker_array)
-    
+
     # ── Helper functions ─────────────────────────────────────────────────────────
 
-    def _make_centroid_marker(self, uid: int, centroid: np.ndarray,
-                              ros_time, frame_id: str) -> Marker:
+    def _make_centroid_marker(
+        self, uid: int, centroid: np.ndarray, ros_time, frame_id: str
+    ) -> Marker:
         marker = Marker()
-        marker.header.stamp    = ros_time
+        marker.header.stamp = ros_time
         marker.header.frame_id = frame_id
-        marker.ns      = "centroids"
-        marker.id      = uid
-        marker.type    = Marker.SPHERE
-        marker.action  = Marker.ADD
+        marker.ns = "centroids"
+        marker.id = uid
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
         marker.scale.x = marker.scale.y = marker.scale.z = 0.4
-        marker.color   = ColorRGBA(r=0.0, g=1.0, b=0.0, a=0.9)
+        marker.color = ColorRGBA(r=0.0, g=1.0, b=0.0, a=0.9)
         marker.lifetime = rclpy.duration.Duration(seconds=0.3).to_msg()
         marker.pose.position.x = float(centroid[0])
         marker.pose.position.y = float(centroid[1])
@@ -322,7 +334,7 @@ class PerceptionNode(Node):
 
         # Apply intrinsic matrix to get image coordinates: (3, M)
         pts_img = self.K @ pts_cam[:3, :]
-        pts_img /= pts_img[2, :]   # perspective division
+        pts_img /= pts_img[2, :]  # perspective division
 
         u = pts_img[0, :].astype(int)
         v = pts_img[1, :].astype(int)
@@ -331,7 +343,7 @@ class PerceptionNode(Node):
         in_bounds = (u >= 0) & (u < self.img_w) & (v >= 0) & (v < self.img_h)
 
         return np.vstack((u[in_bounds], v[in_bounds])), indices[in_bounds]
-    
+
     def _create_rgb_img_msg(self, segmented_img, ros_time) -> Image:
         """Create a ROS2 Image message.
 
@@ -351,8 +363,10 @@ class PerceptionNode(Node):
         msg.step = width * channels
         msg.data = segmented_img.tobytes()
         return msg
-    
-    def _create_painted_cloud_msg(self, lidar_points: np.ndarray, labels: np.ndarray, ros_time) -> PointCloud2:
+
+    def _create_painted_cloud_msg(
+        self, lidar_points: np.ndarray, labels: np.ndarray, ros_time
+    ) -> PointCloud2:
         """Create a painted PointCloud2 message with an extra label field.
 
         Args:
@@ -361,23 +375,30 @@ class PerceptionNode(Node):
             ros_time: ROS timestamp for the message header.
         """
         fields = [
-            PointField(name='x',         offset=0,  datatype=PointField.FLOAT32, count=1),
-            PointField(name='y',         offset=4,  datatype=PointField.FLOAT32, count=1),
-            PointField(name='z',         offset=8,  datatype=PointField.FLOAT32, count=1),
-            PointField(name='intensity', offset=12, datatype=PointField.FLOAT32, count=1),
-            PointField(name='label',     offset=16, datatype=PointField.UINT32,  count=1),
+            PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
+            PointField(
+                name="intensity", offset=12, datatype=PointField.FLOAT32, count=1
+            ),
+            PointField(name="label", offset=16, datatype=PointField.UINT32, count=1),
         ]
 
-        dtype = np.dtype([
-            ('x', '<f4'), ('y', '<f4'), ('z', '<f4'),
-            ('intensity', '<f4'), ('label', '<u4'),
-        ])
+        dtype = np.dtype(
+            [
+                ("x", "<f4"),
+                ("y", "<f4"),
+                ("z", "<f4"),
+                ("intensity", "<f4"),
+                ("label", "<u4"),
+            ]
+        )
         arr = np.zeros(len(lidar_points), dtype=dtype)
-        arr['x']         = lidar_points[:, 0]
-        arr['y']         = lidar_points[:, 1]
-        arr['z']         = lidar_points[:, 2]
-        arr['intensity'] = lidar_points[:, 3]
-        arr['label']     = labels.astype(np.uint32)
+        arr["x"] = lidar_points[:, 0]
+        arr["y"] = lidar_points[:, 1]
+        arr["z"] = lidar_points[:, 2]
+        arr["intensity"] = lidar_points[:, 3]
+        arr["label"] = labels.astype(np.uint32)
 
         msg = PointCloud2()
         msg.header.stamp = ros_time
@@ -391,7 +412,7 @@ class PerceptionNode(Node):
         msg.fields = fields
         msg.data = arr.tobytes()
         return msg
-    
+
     def _create_masks_msg(self, mask, ros_time) -> Image:
         """Create a ROS2 Image message for the merged 2D class label mask.
 
@@ -414,7 +435,9 @@ class PerceptionNode(Node):
         msg.data = mask.tobytes()
         return msg
 
+
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def main():
     rclpy.init()

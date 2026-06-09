@@ -325,10 +325,13 @@ class CarlaAgentNode(Node):
 
 # ──────────────────────────────────────────────────────────────────────────────
 def main():
+    import sys
+    from rclpy.utilities import remove_ros_args
+
     parser = argparse.ArgumentParser(description="CARLA agent with ROS 2")
-    parser.add_argument("--traffic", type=int, default=50, metavar="N",
-                        help="Number of traffic vehicles to spawn (default: 50)")
-    args = parser.parse_args()
+    parser.add_argument("--traffic", type=int, default=25, metavar="N",
+                        help="Number of traffic vehicles to spawn (default: 25)")
+    args = parser.parse_args(remove_ros_args(sys.argv[1:]))
 
     rclpy.init()
     node = CarlaAgentNode(num_traffic=args.traffic)
