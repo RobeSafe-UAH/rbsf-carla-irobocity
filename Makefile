@@ -37,6 +37,9 @@ build_image:
 attach:
 	docker exec -it $(IMAGE_NAME)_container /bin/bash -c "bash"
 
+clean:
+	rm -rf build/ install/ log/ robocity_carla.egg-info/
+
 run:
 	$(call run_docker)
 

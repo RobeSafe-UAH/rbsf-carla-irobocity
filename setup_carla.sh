@@ -5,10 +5,10 @@ mkdir CARLA
 cd CARLA
 wget --content-disposition https://tiny.carla.org/carla-0-9-15-linux
 tar -xf CARLA_0.9.15.tar.gz
-cd Import
-wget --content-disposition https://tiny.carla.org/additional-maps-0-9-15-linux
-cd ..
-./ImportAssets.sh
+# cd Import
+# wget --content-disposition https://tiny.carla.org/additional-maps-0-9-15-linux
+# cd ..
+# ./ImportAssets.sh
 rm CARLA_0.9.15.tar.gz
 cd ..
 touch CARLA/COLCON_IGNORE

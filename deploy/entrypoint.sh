@@ -41,6 +41,16 @@ check_cuda() {
     fi
 }
 
+# Check if colcon has been executed before, if not, run it to build the workspace
+check_colcon(){
+    if [ ! -f "install/setup.bash" ]; then
+        echo "🚀 Building workspace with colcon..."
+        colcon build
+    else
+        echo "✅ Workspace already built"
+    fi
+}
+
 ###############################################################################
 
 # ========================
@@ -60,6 +70,7 @@ export PATH="${HOME}/.local/bin:${PATH}"
 figlet -c "Robocity"
 
 check_venv
+check_colcon
 
 echo -e "\n------------------------------------ System info ----------------------------------------\n"
 
