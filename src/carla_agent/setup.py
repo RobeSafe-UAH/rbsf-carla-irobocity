@@ -28,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             'agent = carla_agent.agent:main',
+            'agent_unsolved = carla_agent.agent_unsolved:main',
         ],
     },
 )
