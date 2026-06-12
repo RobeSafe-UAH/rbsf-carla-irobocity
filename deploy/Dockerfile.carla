@@ -1,0 +1,15 @@
+ARG BASE_IMAGE=curso_carla_irobocity:base
+FROM ${BASE_IMAGE}
+
+ARG USER
+WORKDIR /workspace
+
+RUN echo "PS1='\[\e[1;34m\]\u\[\e[1;37m\]@\[\e[1;33m\]\h\[\e[1;37m\]:\[\e[0;37m\]\w\[\e[1;37m\] >> \[\e[0m\]'" >> ~/.bashrc \
+    && echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
+    && echo "source /workspace/deploy/entrypoint.sh" >> ~/.bashrc \
+    && echo "source install/setup.sh" >> ~/.bashrc \
+    && echo "alias RVIZ='rviz2 -d /workspace/rviz_cfg.rviz'" >> ~/.bashrc \
+    && echo "alias BUILD='cd /workspace && colcon build && source install/setup.sh'" >> ~/.bashrc \
+    && echo "alias RUN='cd /workspace && BUILD && ros2 launch stack_launcher carla.launch.py'" >> ~/.bashrc
+
+CMD ["/bin/bash"]

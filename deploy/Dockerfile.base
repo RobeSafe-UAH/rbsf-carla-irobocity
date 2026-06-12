@@ -1,0 +1,83 @@
+FROM nvidia/cuda:12.9.1-devel-ubuntu22.04
+
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG http_proxy
+
+RUN apt-get update && apt-get install --reinstall -y locales && locale-gen en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.UTF-8
+ENV TZ=Europe/Madrid
+
+ENV NVIDIA_DRIVER_CAPABILITIES=all
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV FORCE_CUDA="1"
+
+ARG USER
+ARG UID
+ARG GID
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN groupadd -g $GID $USER && \
+    useradd --uid $UID --gid $GID -m $USER && \
+    apt-get update && \
+    apt-get install -y sudo && \
+    echo "$USER ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USER && \
+    chmod 0440 /etc/sudoers.d/$USER
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-dev \
+    python-is-python3 \
+    python3-pip \
+    python3-setuptools \
+    curl \
+    wget \
+    git \
+    build-essential \
+    ca-certificates \
+    cmake \
+    figlet \
+    strace \
+    xdg-user-dirs \
+    software-properties-common \
+    libgl1-mesa-glx \
+    mesa-utils \
+    libglapi-mesa \
+    libqt5gui5 \
+    apt-transport-https \
+    lsb-release \
+    gpg \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN add-apt-repository universe -y
+
+# Install ROS 2 Humble
+RUN ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F 'tag_name' | awk -F\" '{print $4}') \
+    && curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb" \
+    && dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb \
+    && apt-get update \
+    && apt-get install -y \
+        ros-humble-desktop \
+        python3-colcon-common-extensions \
+        ros-humble-tf-transformations \
+        ros-humble-vision-msgs \
+        ros-humble-cv-bridge \
+        ros-humble-mvsim \
+        ros-humble-ackermann-msgs \
+        ros-humble-diagnostic-updater \
+        ros-humble-serial-driver \
+        ros-humble-asio-cmake-module \
+        ros-humble-laser-proc \
+        ros-humble-urg-node \
+        ros-humble-slam-toolbox \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install UV
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV UV_LINK_MODE=copy
+
+USER $USER
+ENV TERM=xterm-256color

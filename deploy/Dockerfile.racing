@@ -1,0 +1,29 @@
+ARG BASE_IMAGE=curso_carla_irobocity:base
+FROM ${BASE_IMAGE}
+
+ARG USER
+WORKDIR /ros2_ws
+
+RUN echo "PS1='\[\e[1;34m\]\u\[\e[1;37m\]@\[\e[1;33m\]\h\[\e[1;37m\]:\[\e[0;37m\]\w\[\e[1;37m\] → \[\e[0m\]'" >> ~/.bashrc \
+    && echo "source ~/.bashrc" >> ~/.bash_profile \
+    && echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc \
+    && echo 'CB() { pushd /ros2_ws > /dev/null; colcon build && source install/local_setup.bash; popd > /dev/null; }' >> ~/.bashrc
+
+# ROS 2 workspace init
+WORKDIR /ros2_ws/src
+WORKDIR /ros2_ws
+RUN colcon build && . install/setup.bash
+
+# RealSense drivers
+USER root
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -sSf https://librealsense.realsenseai.com/Debian/librealsenseai.asc | \
+        gpg --dearmor | tee /etc/apt/keyrings/librealsenseai.gpg > /dev/null \
+    && echo "deb [signed-by=/etc/apt/keyrings/librealsenseai.gpg] https://librealsense.realsenseai.com/Debian/apt-repo $(lsb_release -cs) main" | \
+        tee /etc/apt/sources.list.d/librealsense.list \
+    && apt-get update \
+    && apt-get install -y librealsense2-utils librealsense2-dev \
+    && rm -rf /var/lib/apt/lists/*
+USER $USER
+
+CMD ["/bin/bash"]

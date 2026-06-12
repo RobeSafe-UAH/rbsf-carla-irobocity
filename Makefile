@@ -1,4 +1,6 @@
-TAG_NAME := v1
+BASE_TAG := base
+CARLA_TAG := carla
+RACING_TAG := racing
 ROS_TAG := ros2_humble
 IMAGE_NAME := curso_carla_irobocity
 CONTAINER := $(IMAGE_NAME)_container
@@ -23,13 +25,27 @@ define run_docker
 		-e TERM=xterm-256color \
 		-e NVIDIA_VISIBLE_DEVICES=all \
 		-e NVIDIA_DRIVER_CAPABILITIES=all \
-		$(IMAGE_NAME):$(TAG_NAME) \
+		$(IMAGE_NAME):$(CARLA_TAG) \
 		bash
 endef
 
-build_image:
-	docker build deploy/ \
-		-t $(IMAGE_NAME):$(TAG_NAME) \
+build_base:
+	docker build . -f deploy/Dockerfile.base \
+		-t $(IMAGE_NAME):$(BASE_TAG) \
+		--build-arg USER=$(USER_NAME) \
+		--build-arg UID=$(UID) \
+		--build-arg GID=$(GID)
+
+build_carla: build_base
+	docker build . -f deploy/Dockerfile.carla \
+		-t $(IMAGE_NAME):$(CARLA_TAG) \
+		--build-arg USER=$(USER_NAME) \
+		--build-arg UID=$(UID) \
+		--build-arg GID=$(GID)
+
+build_racing: build_base
+	docker build . -f deploy/Dockerfile.racing \
+		-t $(IMAGE_NAME):$(RACING_TAG) \
 		--build-arg USER=$(USER_NAME) \
 		--build-arg UID=$(UID) \
 		--build-arg GID=$(GID)

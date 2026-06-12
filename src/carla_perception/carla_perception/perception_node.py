@@ -160,7 +160,6 @@ class PerceptionNode(Node):
           6. Save the corrsponding pcl for each instance
           7. Estimate the centroid of each instance's point cloud and publish as a MarkerArray.
         """
-        print("Timer callback triggered.")
         ros_time = self.get_clock().now().to_msg()
 
         if not hasattr(self, "last_camera_msg") or not hasattr(self, "last_lidar_msg"):
@@ -196,9 +195,12 @@ class PerceptionNode(Node):
                 temp[mask > 0] = 255
             # Resize to the original image size using nearest-neighbour to
             # preserve binary mask values
-            merged_mask = cv2.resize(
-                temp, (self.img_w, self.img_h), interpolation=cv2.INTER_NEAREST
-            )
+            if temp.shape != (self.img_h, self.img_w):
+                merged_mask = cv2.resize(
+                    temp, (self.img_w, self.img_h), interpolation=cv2.INTER_NEAREST
+                )
+            else:
+                merged_mask = temp
 
         # STEP 3: Publish the segmented image and the merged class mask
         msg = self._create_rgb_img_msg(results.plot(), ros_time)
@@ -322,10 +324,10 @@ class PerceptionNode(Node):
 
         # Build homogeneous coordinates: (N, 4)
         ones = np.ones((N, 1), dtype=np.float32)
-        pts_homo = np.hstack((lidar_points[:, :3], ones))
+        pts_homog = np.hstack((lidar_points[:, :3], ones))
 
         # Transform from LiDAR frame to camera frame: (4, N)
-        pts_cam = self.lidar2cam @ pts_homo.T
+        pts_cam = self.lidar2cam @ pts_homog.T
 
         # Keep only points in front of the camera (positive depth)
         front = pts_cam[2, :] > 0
@@ -397,8 +399,7 @@ class PerceptionNode(Node):
         arr["x"] = lidar_points[:, 0]
         arr["y"] = lidar_points[:, 1]
         arr["z"] = lidar_points[:, 2]
-        arr["intensity"] = lidar_points[:, 3]
-        arr["label"] = labels.astype(np.uint32)
+        arr["intensity"] = labels.astype(np.uint32)
 
         msg = PointCloud2()
         msg.header.stamp = ros_time
