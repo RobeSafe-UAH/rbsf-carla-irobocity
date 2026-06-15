@@ -17,7 +17,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'traffic',
-            default_value='25',
+            default_value='50',
             description='Number of traffic vehicles to spawn',
         ),
         Node(

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 check_venv() {
     echo "🔄 Checking virtual environment..."
     if [ ! -d ".venv" ]; then

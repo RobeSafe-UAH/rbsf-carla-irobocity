@@ -32,7 +32,7 @@ This creates the `CARLA/` directory at the repo root.
 ### 2. Build the Docker image
 
 ```bash
-make build_image
+make build
 ```
 
 The image is based on `nvidia/cuda:12.9.1-devel-ubuntu22.04` and bundles:

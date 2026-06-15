@@ -10,6 +10,7 @@ RUN echo "PS1='\[\e[1;34m\]\u\[\e[1;37m\]@\[\e[1;33m\]\h\[\e[1;37m\]:\[\e[0;37m\
     && echo "source install/setup.sh" >> ~/.bashrc \
     && echo "alias RVIZ='rviz2 -d /workspace/rviz_cfg.rviz'" >> ~/.bashrc \
     && echo "alias BUILD='cd /workspace && colcon build && source install/setup.sh'" >> ~/.bashrc \
-    && echo "alias RUN='cd /workspace && BUILD && ros2 launch stack_launcher carla.launch.py'" >> ~/.bashrc
+    && echo "alias RUN_AGENT='cd /workspace && BUILD && ros2 launch stack_launcher agent.launch.py'" >> ~/.bashrc \
+    && echo "alias RUN_PERCEPTION='cd /workspace && BUILD && ros2 launch stack_launcher perception.launch.py'" >> ~/.bashrc
 
 CMD ["/bin/bash"]
