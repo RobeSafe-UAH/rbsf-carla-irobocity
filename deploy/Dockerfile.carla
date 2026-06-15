@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=curso_carla_irobocity:base
+ARG BASE_IMAGE=curso_uah_irobocity:base
 FROM ${BASE_IMAGE}
 
 ARG USER
