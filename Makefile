@@ -1,8 +1,8 @@
 BASE_TAG := base
-CARLA_TAG := carla
+COURSE_TAG := carla
 ROS_TAG := ros2_humble
 IMAGE_NAME := curso_uah_irobocity
-CONTAINER_NAME := $(IMAGE_NAME)_container
+CONTAINER_NAME := $(IMAGE_NAME)_$(COURSE_TAG)_container
 
 UID := $(shell id -u)
 GID := $(shell id -g)
@@ -24,7 +24,7 @@ define run_docker
 		-e TERM=xterm-256color \
 		-e NVIDIA_VISIBLE_DEVICES=all \
 		-e NVIDIA_DRIVER_CAPABILITIES=all \
-		$(IMAGE_NAME):$(CARLA_TAG) \
+		$(IMAGE_NAME):$(COURSE_TAG) \
 		bash
 endef
 
@@ -37,7 +37,7 @@ build_base:
 
 build: build_base
 	docker build . -f deploy/Dockerfile.carla \
-		-t $(IMAGE_NAME):$(CARLA_TAG) \
+		-t $(IMAGE_NAME):$(COURSE_TAG) \
 		--build-arg USER=$(USER_NAME) \
 		--build-arg UID=$(UID) \
 		--build-arg GID=$(GID)
