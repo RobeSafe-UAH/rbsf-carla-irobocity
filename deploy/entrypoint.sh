@@ -67,14 +67,8 @@ export PYTHONPATH="${WORK_DIR}/.venv/lib/python3.10/site-packages:${PYTHONPATH}"
 export PYTHONPATH=/workspace/.venv/lib/python3.10/site-packages:$PYTHONPATH
 export PATH="${HOME}/.local/bin:${PATH}"
 
+clear
 figlet -c "Robocity"
 
 check_venv
 check_colcon
-
-echo -e "\n------------------------------------ System info ----------------------------------------\n"
-
-check_cuda
-
-
-echo -e "\n-----------------------------------------------------------------------------------------\n"
