@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'perception = carla_perception.perception_node:main',
+            'perception_student = carla_perception.perception_node_student:main',
         ],
     },
 )
