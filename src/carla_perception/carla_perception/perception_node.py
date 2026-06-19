@@ -53,6 +53,7 @@ def _sor_filter(pts: np.ndarray, k: int, n_std: float) -> np.ndarray:
     exceeds global_mean + n_std * global_std."""
     if len(pts) <= k:
         return pts
+    # TODO: use KDTree to filter outliers based on the mean distance to k nearest neighbors.
     distances, _ = KDTree(pts).query(pts, k=k + 1)
     mean_dists = distances[:, 1:].mean(axis=1)  # exclude self (col 0)
     thresh = mean_dists.mean() + n_std * mean_dists.std()
@@ -207,6 +208,8 @@ class PerceptionNode(Node):
         # TODO: complete the method _create_rgb_img_msg().
         msg = self._create_rgb_img_msg(results.plot(), ros_time)
         self.segmentation_publisher.publish(msg)
+            
+        # return  # Remove this line after completing the TODOs below.
                 
         """ Exercise 4 """
 
@@ -250,7 +253,9 @@ class PerceptionNode(Node):
             # self._create_rgb_img_msg() and publish it via self.projected_lidar_publisher.
             msg = self._create_rgb_img_msg(img_with_lidar, ros_time)
             self.projected_lidar_publisher.publish(msg)
-
+        
+        # return  # Remove this line after completing the TODOs below.
+        
         """ Exercise 5 """
 
         # STEP 4: Publish the painted point cloud (1 = inside a detection, 0 = background)
@@ -263,6 +268,8 @@ class PerceptionNode(Node):
             #       self.painted_cloud_publisher.
             msg = self._create_painted_cloud_msg(lidar_points, occupied, ros_time)
             self.painted_cloud_publisher.publish(msg)
+
+        # return  # Remove this line after completing the TODOs below.
 
         """ Exercise 6 """
 
@@ -304,11 +311,10 @@ class PerceptionNode(Node):
         marker_array = MarkerArray()
         for i, instance in enumerate(self.instance_clouds):
             pts = instance["points"][:, :3]
+            # Filter out instances with too few points to compute a reliable centroid.
             if len(pts) < MIN_INSTANCE_POINTS:
                 continue
-            pts = _sor_filter(pts, SOR_K, SOR_NSTD)
-            if len(pts) < MIN_INSTANCE_POINTS:
-                continue
+            # TODO: compute the centroid of pts
             centroid = pts.mean(axis=0)
             # TODO: Call self._make_centroid_marker(i, centroid, ros_time,
             #       self.last_lidar_msg.header.frame_id) and append the result
