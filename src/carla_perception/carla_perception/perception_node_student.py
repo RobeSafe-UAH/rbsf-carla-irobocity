@@ -71,10 +71,10 @@ class PerceptionNode(Node):
         #       Queue size 1.
         # Subscribers
         self.lidar_subscriber = self.create_subscription(
-            PointCloud2, "lidar", self.lidar_callback, 1
+            None, None, self.lidar_callback, 1
         )
         self.camera_subscriber = self.create_subscription(
-            Image, "cam_front", self.camera_callback, 1
+            None, None, self.camera_callback, 1
         )
         
         # TF2 buffer/listener — filled automatically from /tf_static
