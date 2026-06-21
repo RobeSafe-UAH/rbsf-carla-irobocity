@@ -374,8 +374,8 @@ class PerceptionNode(Node):
         N = lidar_points.shape[0]
 
         # Build homogeneous coordinates: (N, 4)
-        ones = None
-        pts_homog = None
+        ones = np.ones((N, 1), dtype=np.float32)
+        pts_homog = np.hstack((lidar_points[:, :3], ones))
 
         # Transform from LiDAR frame to camera frame (4, N)
         # Remember to use the self.lidar2cam matrix and pts_homog
