@@ -50,7 +50,7 @@ from cv_bridge import CvBridge
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# EXERCISE 1 — Configure the sensors
+# EXERCISE 2 — Configure the sensors
 # ------------------------------------------------------------------------------
 # Each sensor is described by a dictionary:
 #   - "id"   : the topic name it will publish on
@@ -62,11 +62,13 @@ from cv_bridge import CvBridge
 # Fill in every `...`. The id, type and orientation (roll/pitch/yaw) are given
 # to you: the orientation aligns each sensor with the ROS convention (we will
 # explain why on the slides). Suggested values are written next to each line.
+#
+# NOTE -> Docs: https://carla.readthedocs.io/en/latest/ref_sensors/
 # ──────────────────────────────────────────────────────────────────────────────
 SENSORS = [
     {
         "id": "cam_front",
-        "type": "sensor.camera.rgb",
+        "type": "...",             # TODO: sensory type (RGB camera)
         "x": ..., "y": ..., "z": ...,            # TODO: position on the car [m]
         "roll": -90, "pitch": 0, "yaw": -90,     # given: ROS camera "optical" frame
         "image_size_x": ..., "image_size_y": ...,  # TODO: image resolution [px]
@@ -75,7 +77,7 @@ SENSORS = [
     },
     {
         "id": "lidar",
-        "type": "sensor.lidar.ray_cast",
+        "type": "...",         # TODO: sensory type (LiDAR)
         "x": ..., "y": ..., "z": ...,            # TODO: position on the car [m]
         "roll": 0, "pitch": 0, "yaw": -90,       # given
         "range": ..., "channels": ...,           # TODO: max distance [m] and number of layers
@@ -95,17 +97,19 @@ class CarlaAgentNode(Node):
         self.traffic_actors = []
 
         # ──────────────────────────────────────────────────────────────────
-        # EXERCISE 2 — Connect to the CARLA simulator
+        # EXERCISE 1 — Connect to the CARLA simulator
         # ------------------------------------------------------------------
         # A CARLA *client* talks to the simulator over the network.
         # From the client you then get the *world*, which is the running
         # simulation you will spawn actors into.
+        #
+        # NOTE -> Docs: https://carla.readthedocs.io/en/latest/core_world/
         # ──────────────────────────────────────────────────────────────────
-        # >>> TODO Exercise 2 <<<
+        # >>> TODO Exercise 1 <<<
         self.client = ...          # TODO 1: create the client
         ...                        # TODO 2: set its timeout to 10 seconds
         self.world = ...           # TODO 3: get the world from the client
-        # >>> end Exercise 2 <<<
+        # >>> end Exercise 1 <<<
 
         bp_lib = self.world.get_blueprint_library()
 
@@ -195,7 +199,7 @@ class CarlaAgentNode(Node):
         # 3a) Read the image width, height and FOV from the `spec` dict.
         #     Use spec.get(key, default) so it works even if a key is absent.
         #
-        # 3b) Focal length (in pixels) of an ideal pinhole camera.
+        # 3b) Focal length (in pixels) of an ideal pinhole camera. Use FOV in radians.
         #
         # 3c) The principal point (cx, cy) is the image centre.
         # ──────────────────────────────────────────────────────────────────
@@ -305,20 +309,20 @@ class CarlaAgentNode(Node):
             # ──────────────────────────────────────────────────────────────
             if "camera" in sensor_type:
                 # >>> TODO Exercise 4a (camera) <<<
-                pub = ...   # TODO: an Image publisher on topic `sensor_id`
+                pub_camera = ...   # TODO: an Image publisher on topic `sensor_id`
                 # >>> end Exercise 4a <<<
 
                 pub_info = self.create_publisher(CameraInfo, f"{sensor_id}/camera_info", 10)
                 cam_info = self._make_camera_info(spec)
-                actor.listen(lambda data, p=pub, pi=pub_info, ci=cam_info, sid=sensor_id:
+                actor.listen(lambda data, p=pub_camera, pi=pub_info, ci=cam_info, sid=sensor_id:
                              self._publish_camera(data, p, pi, ci, sid))
                 self.get_logger().info(f"Intrinsics published on /{sensor_id}/camera_info")
 
             elif "lidar" in sensor_type:
                 # >>> TODO Exercise 4b (lidar) <<<
-                pub = ...   # TODO: a PointCloud2 publisher on topic `sensor_id`
+                pub_lidar = ...   # TODO: a PointCloud2 publisher on topic `sensor_id`
                 # >>> end Exercise 4b <<<
-                actor.listen(lambda data, p=pub, sid=sensor_id: self._publish_lidar(data, p, sid))
+                actor.listen(lambda data, p=pub_lidar, sid=sensor_id: self._publish_lidar(data, p, sid))
 
             self.sensors.append(actor)
             self.get_logger().info(f"Sensor '{sensor_id}' attached -> /{sensor_id}")
@@ -348,6 +352,8 @@ class CarlaAgentNode(Node):
         # in B, G, R, A order (A = alpha/transparency, we don't need it).
         # `np.frombuffer(...)` below already gives you that flat array.
         # Reshape it into a proper (H, W, channels) image and drop the alpha.
+        #
+        # NOTE: Check Camera Output Attributes -> https://carla.readthedocs.io/en/latest/ref_sensors/#rgb-camera
         # ──────────────────────────────────────────────────────────────────
         array = np.frombuffer(image.raw_data, dtype=np.uint8)
         # >>> TODO Exercise 5 <<<
@@ -373,9 +379,12 @@ class CarlaAgentNode(Node):
         # 6) Turn the bytes into a NumPy array with shape (N, 4).
         #     Make sure the result is writable (frombuffer returns a read-only
         #     view into the original buffer).
+        #
+        # NOTE: Check LiDAR Output Attributes -> https://carla.readthedocs.io/en/latest/ref_sensors/#lidar-sensor
         # ──────────────────────────────────────────────────────────────────
         # >>> TODO Exercise 6 <<<
-        points = ...   # TODO
+        points = ...    # TODO: interpret the raw bytes as a 1D array of float32 values
+        points = ...    # TODO: reshape to (N, 4) and make it writable
         # >>> end Exercise 6 <<<
         points[:, 0] = -points[:, 0]  # CARLA left-handed -> ROS right-handed
 
