@@ -134,9 +134,9 @@ The simulation runs in synchronous mode at 20 Hz (`fixed_delta_seconds = 0.05`).
 | Camera (`cam_front`) | x=0, y=0, z=2.5 m | 640×480 px | 90° horizontal | 10 Hz |
 | LiDAR (`lidar`) | x=0, y=0, z=2.5 m | 32 channels | 50 m | 20 Hz (320 000 pts/s) |
 
-#### Exercises — `agent_unsolved.py`
+#### Exercises — `agent.py`
 
-Work through the six TODOs in `src/carla_agent/carla_agent/agent_unsolved.py`:
+Work through the six TODOs in `src/carla_agent/carla_agent/agent.py`:
 
 1. **Configure the sensors** (`SENSORS` dict) — fill in position, resolution, FOV, and LiDAR parameters.
 2. **Connect to CARLA** (`__init__`) — create the client, set timeout, get the world.
@@ -144,8 +144,6 @@ Work through the six TODOs in `src/carla_agent/carla_agent/agent_unsolved.py`:
 4. **Create ROS 2 publishers** (`_attach_sensors`) — one `Image` publisher for the camera and one `PointCloud2` publisher for the LiDAR.
 5. **Decode camera image** (`_publish_camera`) — reshape the BGRA byte buffer to (H, W, 4) and drop the alpha channel.
 6. **Decode LiDAR scan** (`_publish_lidar`) — reshape the float32 buffer to (N, 4) and flip the X axis from CARLA left-handed to ROS right-handed coordinates.
-
-The complete reference solution is in `src/carla_agent/carla_agent/agent.py`.
 
 ### `carla_perception`
 
@@ -178,9 +176,9 @@ Perception pipeline that fuses front-camera detections with the LiDAR point clou
 5. **Per-instance point extraction** — each YOLO instance mask is sampled at projected LiDAR pixel locations to collect the 3D points belonging to that instance.
 6. **Outlier removal + centroid estimation** — Statistical Outlier Removal (k=10 neighbours, 2σ threshold) is applied per instance; the centroid of the surviving points is published as a sphere marker in `/object_centers`.
 
-#### Exercises — `perception_node_student.py`
+#### Exercises — `perception_node.py`
 
-Work through the seven TODOs in `src/carla_perception/carla_perception/perception_node_student.py`:
+Work through the seven TODOs in `src/carla_perception/carla_perception/perception_node.py`:
 
 1. **Subscribers** (`__init__`) — create subscriptions for `/cam_front` (Image) and `/lidar` (PointCloud2); wait for the first `camera_info` message and the TF transforms from camera and LiDAR frames to ego frame.
 2. **Timer and publishers** (`__init__`) — configure the 10 Hz perception timer; create the four publishers listed above.
@@ -189,8 +187,6 @@ Work through the seven TODOs in `src/carla_perception/carla_perception/perceptio
 5. **Painted cloud** (`_create_painted_cloud_msg`, `timer_callback`) — build a `PointCloud2` with a `label` field and publish via `self.painted_cloud_publisher`.
 6. **Per-instance masking + centroid markers** (`timer_callback`, `_make_centroid_marker`) — sample each instance mask at projected LiDAR pixel locations; compute the centroid and build and publish the `MarkerArray`.
 7. **(Optional) SOR filter** (`_sor_filter`) — implement Statistical Outlier Removal using `KDTree` (k=10 neighbours, 2σ threshold) to remove noisy points from each instance cloud before centroid estimation.
-
-The complete reference solution is in `src/carla_perception/carla_perception/perception_node.py`.
 
 ### `stack_launcher`
 
