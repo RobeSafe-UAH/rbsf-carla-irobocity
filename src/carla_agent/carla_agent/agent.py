@@ -1,11 +1,33 @@
 """
-agent.py — Simple CARLA agent for course
-=========================================
-Usage:
-    python agent.py                # no traffic
-    python agent.py --traffic 50   # with 50 traffic vehicles
+agent_unsolved.py — CARLA + ROS 2 course exercises
+===================================================
+This is the SAME agent as `agent.py`, but with some pieces of code removed.
+Wherever you see three dots `...` next to a `# TODO`, you have to fill it in.
 
-Published topics:
+Each exercise is delimited by:
+
+    # >>> TODO Exercise N <<<
+    ...
+    # >>> end Exercise N <<<
+
+Search the file for "TODO" to jump between them. The complete reference
+solution is in `agent.py` (same folder) if you get stuck.
+
+────────────────────────────────────────────────────────────────────────────
+ EXERCISES (in the order they appear in the file)
+────────────────────────────────────────────────────────────────────────────
+ 1. Configure the sensors (where they go, resolution, FOV...) -> SENSORS
+ 2. Connect to the CARLA simulator                            -> __init__
+ 3. Camera intrinsics: read params + focal length from FOV    -> _make_camera_info
+ 4. Create the ROS 2 sensor publishers                        -> _attach_sensors
+ 5. Decode a camera image (BGRA bytes -> BGR)                 -> _publish_camera
+ 6. Decode a LiDAR scan + fix the coordinate system           -> _publish_lidar
+────────────────────────────────────────────────────────────────────────────
+
+How to run (inside the container, with the CARLA server already running):
+    ros2 run carla_agent agent_unsolved --traffic 25
+
+Published topics (once everything is filled in):
     /cam_front                         sensor_msgs/Image
     /cam_front/camera_info             sensor_msgs/CameraInfo   <- intrinsics
     /lidar                             sensor_msgs/PointCloud2
@@ -28,26 +50,37 @@ from cv_bridge import CvBridge
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# SENSOR CONFIGURATION
+# EXERCISE 1 — Configure the sensors
+# ------------------------------------------------------------------------------
+# Each sensor is described by a dictionary:
+#   - "id"   : the topic name it will publish on
+#   - "type" : the CARLA blueprint (camera, lidar, ...)
+#   - x/y/z          : WHERE it is attached to the car, in metres
+#   - roll/pitch/yaw : HOW it is oriented, in degrees
+#   - plus a few sensor-specific settings (resolution, range, ...)
+#
+# Fill in every `...`. The id, type and orientation (roll/pitch/yaw) are given
+# to you: the orientation aligns each sensor with the ROS convention (we will
+# explain why on the slides). Suggested values are written next to each line.
 # ──────────────────────────────────────────────────────────────────────────────
 SENSORS = [
     {
         "id": "cam_front",
         "type": "sensor.camera.rgb",
-        "x": 0.0, "y": 0.0, "z": 2.5,
-        "roll": -90, "pitch": 0, "yaw": -90,
-        "image_size_x": 640, "image_size_y": 480, "fov": 90,
-        "sensor_tick": 0.1,  # 10 Hz (matches fixed_delta_seconds for sync)
+        "x": ..., "y": ..., "z": ...,            # TODO: position on the car [m]
+        "roll": -90, "pitch": 0, "yaw": -90,     # given: ROS camera "optical" frame
+        "image_size_x": ..., "image_size_y": ...,  # TODO: image resolution [px]
+        "fov": ...,                              # TODO: horizontal field of view [deg]
+        "sensor_tick": ...,                      # TODO: seconds between frames
     },
     {
         "id": "lidar",
         "type": "sensor.lidar.ray_cast",
-        "x": 0.0, "y": 0.0, "z": 2.5,
-        "roll": 0, "pitch": 0, "yaw": -90,
-        "range": 50, "channels": 32,
-        "rotation_frequency": 20,    # = 1 / fixed_delta_seconds -> full rotation per tick
-        "points_per_second": 320000, # channels x points_per_rotation x rotation_frequency
-                                     # 32 x 500 x 20 = 320000 -> 500 pts per channel per rotation
+        "x": ..., "y": ..., "z": ...,            # TODO: position on the car [m]
+        "roll": 0, "pitch": 0, "yaw": -90,       # given
+        "range": ..., "channels": ...,           # TODO: max distance [m] and number of layers
+        "rotation_frequency": ...,               # TODO: full turns per second
+        "points_per_second": ...,                # TODO: channels x points_per_turn x rotation_frequency
     }
 ]
 
@@ -61,10 +94,19 @@ class CarlaAgentNode(Node):
         self.bridge = CvBridge()
         self.traffic_actors = []
 
-        # Connect to CARLA
-        self.client = carla.Client("localhost", 2000)
-        self.client.set_timeout(10.0)
-        self.world = self.client.get_world()
+        # ──────────────────────────────────────────────────────────────────
+        # EXERCISE 2 — Connect to the CARLA simulator
+        # ------------------------------------------------------------------
+        # A CARLA *client* talks to the simulator over the network.
+        # From the client you then get the *world*, which is the running
+        # simulation you will spawn actors into.
+        # ──────────────────────────────────────────────────────────────────
+        # >>> TODO Exercise 2 <<<
+        self.client = ...          # TODO 1: create the client
+        ...                        # TODO 2: set its timeout to 10 seconds
+        self.world = ...           # TODO 3: get the world from the client
+        # >>> end Exercise 2 <<<
+
         bp_lib = self.world.get_blueprint_library()
 
         # Synchronous mode
@@ -146,18 +188,25 @@ class CarlaAgentNode(Node):
         """
         Computes the intrinsic matrix K from resolution and FOV and returns
         a CameraInfo message ready to publish.
-
-        For a pinhole camera with horizontal FOV:
-            fx = fy = (width / 2) / tan(fov_h / 2)
-            cx = width  / 2
-            cy = height / 2
         """
-        w   = int(spec.get("image_size_x", 640))
-        h   = int(spec.get("image_size_y", 480))
-        fov = float(spec.get("fov", 90.0))
+        # ──────────────────────────────────────────────────────────────────
+        # EXERCISE 3 — Camera intrinsics
+        # ------------------------------------------------------------------
+        # 3a) Read the image width, height and FOV from the `spec` dict.
+        #     Use spec.get(key, default) so it works even if a key is absent.
+        #
+        # 3b) Focal length (in pixels) of an ideal pinhole camera.
+        #
+        # 3c) The principal point (cx, cy) is the image centre.
+        # ──────────────────────────────────────────────────────────────────
+        # >>> TODO Exercise 3 <<<
+        w   = int(spec.get(..., ...))    # TODO 3a: image width
+        h   = int(spec.get(..., ...))    # TODO 3a: image height
+        fov = float(spec.get(..., ...))  # TODO 3a: horizontal field of view
 
-        f = (w / 2.0) / math.tan(math.radians(fov) / 2.0)
-        cx, cy = w / 2.0, h / 2.0
+        f = ...                          # TODO 3b: focal length in pixels
+        cx, cy = ..., ...                # TODO 3c: principal point
+        # >>> end Exercise 3 <<<
 
         msg = CameraInfo()
         msg.header.frame_id = spec["id"]
@@ -241,8 +290,24 @@ class CarlaAgentNode(Node):
             sensor_type = spec["type"]
             sensor_id   = spec["id"]
 
+            # ──────────────────────────────────────────────────────────────
+            # EXERCISE 4 — Create the ROS 2 sensor publishers
+            # --------------------------------------------------------------
+            # A ROS 2 node publishes data through a *publisher*:
+            #
+            #     pub = self.create_publisher(MsgType, "topic_name", queue)
+            #
+            # The CameraInfo publisher below is already written for you, use
+            # it as a template.
+            #   4a) camera -> message type Image,       topic = sensor_id
+            #   4b) lidar  -> message type PointCloud2,  topic = sensor_id
+            # Use a queue size of 10 for both.
+            # ──────────────────────────────────────────────────────────────
             if "camera" in sensor_type:
-                pub      = self.create_publisher(Image,      sensor_id,                10)
+                # >>> TODO Exercise 4a (camera) <<<
+                pub = ...   # TODO: an Image publisher on topic `sensor_id`
+                # >>> end Exercise 4a <<<
+
                 pub_info = self.create_publisher(CameraInfo, f"{sensor_id}/camera_info", 10)
                 cam_info = self._make_camera_info(spec)
                 actor.listen(lambda data, p=pub, pi=pub_info, ci=cam_info, sid=sensor_id:
@@ -250,7 +315,9 @@ class CarlaAgentNode(Node):
                 self.get_logger().info(f"Intrinsics published on /{sensor_id}/camera_info")
 
             elif "lidar" in sensor_type:
-                pub = self.create_publisher(PointCloud2, sensor_id, 10)
+                # >>> TODO Exercise 4b (lidar) <<<
+                pub = ...   # TODO: a PointCloud2 publisher on topic `sensor_id`
+                # >>> end Exercise 4b <<<
                 actor.listen(lambda data, p=pub, sid=sensor_id: self._publish_lidar(data, p, sid))
 
             self.sensors.append(actor)
@@ -274,9 +341,18 @@ class CarlaAgentNode(Node):
     def _publish_camera(self, image, pub, pub_info, cam_info, frame_id):
         stamp = self.get_clock().now().to_msg()
 
-        # Image
+        # ──────────────────────────────────────────────────────────────────
+        # EXERCISE 5 — Decode the camera image
+        # ------------------------------------------------------------------
+        # CARLA gives the image as a flat array of bytes, 4 values per pixel
+        # in B, G, R, A order (A = alpha/transparency, we don't need it).
+        # `np.frombuffer(...)` below already gives you that flat array.
+        # Reshape it into a proper (H, W, channels) image and drop the alpha.
+        # ──────────────────────────────────────────────────────────────────
         array = np.frombuffer(image.raw_data, dtype=np.uint8)
-        array = array.reshape((image.height, image.width, 4))[:, :, :3]
+        # >>> TODO Exercise 5 <<<
+        array = ...   # TODO: reshape to (H, W, 4) and drop the alpha channel
+        # >>> end Exercise 5 <<<
         msg = self.bridge.cv2_to_imgmsg(array, encoding="bgr8")
         msg.header.stamp    = stamp
         msg.header.frame_id = frame_id
@@ -288,8 +364,21 @@ class CarlaAgentNode(Node):
         pub_info.publish(cam_info)
 
     def _publish_lidar(self, data, pub, frame_id):
-        points = np.frombuffer(data.raw_data, dtype=np.float32).reshape(-1, 4).copy()
+        # ──────────────────────────────────────────────────────────────────
+        # EXERCISE 6 — Decode the LiDAR scan + fix the coordinate system
+        # ------------------------------------------------------------------
+        # The raw buffer contains float32 values, 4 per point:
+        #     x, y, z, intensity  (repeated for every point in the scan)
+        #
+        # 6) Turn the bytes into a NumPy array with shape (N, 4).
+        #     Make sure the result is writable (frombuffer returns a read-only
+        #     view into the original buffer).
+        # ──────────────────────────────────────────────────────────────────
+        # >>> TODO Exercise 6 <<<
+        points = ...   # TODO
+        # >>> end Exercise 6 <<<
         points[:, 0] = -points[:, 0]  # CARLA left-handed -> ROS right-handed
+
         msg = PointCloud2()
         msg.header.stamp    = self.get_clock().now().to_msg()
         msg.header.frame_id = frame_id
