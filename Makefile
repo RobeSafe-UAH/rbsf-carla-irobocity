@@ -7,6 +7,7 @@ CONTAINER_NAME := $(IMAGE_NAME)_$(COURSE_TAG)_container
 UID := $(shell id -u)
 GID := $(shell id -g)
 USER_NAME := $(shell whoami)
+ROS_DOMAIN_ID := 50
 
 define run_docker
 	docker run -it --rm \
@@ -24,6 +25,7 @@ define run_docker
 		-e TERM=xterm-256color \
 		-e NVIDIA_VISIBLE_DEVICES=all \
 		-e NVIDIA_DRIVER_CAPABILITIES=all \
+		-e ROS_DOMAIN_ID=$(ROS_DOMAIN_ID) \
 		$(IMAGE_NAME):$(COURSE_TAG) \
 		bash
 endef
